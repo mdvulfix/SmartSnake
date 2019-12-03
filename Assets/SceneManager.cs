@@ -13,22 +13,17 @@ namespace SmartSnake
         public SceneObject map;        
         public SceneObject player;
 
+        private Node [,] grid;
+        private List<Node> AvailableNodes;
 
-
-
-        
-        Node mapNode, appleNode, playerNode;
-            
-        Node [,]    mapGrid;
         private int mapWidth = 20;
         private int mapHeight= 20;
 
         public GameObject       cameraObj;
-        //, appleObj, ;
-        private SpriteRenderer  mapRndr, appleRndr, playerRndr;
+     
 
         private List<GameObject> objectsOnMap;
-        private List<Node> emptyNodes;
+        
 
         #region START /////////////////////////////       
 
@@ -40,7 +35,7 @@ namespace SmartSnake
             
             //objectsOnMap = new List<GameObject>();
             CreateMap(mapWidth, mapHeight);
-            //CreateApple(5);
+            CreateApple(5);
             CreatePlayer();
             StartCoroutine(Routine(0.035f));   
         }
@@ -52,32 +47,24 @@ namespace SmartSnake
 
         private void CreateMap(int width, int height)
         {
+
+            grid = CreateGrid(width, height);
             map = CreateObjectOnScene("Map", new GameObject(), width, height, Color.white, 0, Vector2.zero);
             
-            //mapObj = CreateObjectOnScene(mapObj, "Map", width, height, Color.white, 0);
-            //mapGrid = CreateGrid(width, height);
         }
 
-/* 
+
         private void CreateApple(int amount)
         {
-            while(amount > 0)
-            {
-                
-                
-                GameObject newAppleObj = CreateObjectOnScene(new GameObject(), "Apple", 1, 1, Color.green, 1, new Vector2(Random.Range(0, mapWidth), Random.Range(0, mapHeight)));
-                //appleNode = mapGrid[5, 5];
-                Node newAppleNode = new Node(){x = Random.Range(-mapWidth, mapWidth), y= Random.Range(-mapHeight, mapHeight)};
-                newAppleNode = SetPositionOnMap(newAppleNode, newAppleNode.x, newAppleNode.y);
-                newAppleObj.transform.position = newAppleNode.GetPositionInWorld();
-                amount--;
+            for (int i = 0; i < amount; i++)
+            {               
+                SceneObject apple = CreateObjectOnScene("Apple" + i,new GameObject(), 1, 1, Color.green, 1, FindAvailablePosition());
             }
         }
-*/
+
         public void CreatePlayer()
         {
-            player = CreateObjectOnScene("Player", new GameObject(), 1, 1, Color.black, 1, Vector2.zero);
-            //playerObj.transform.position = playerNode.GetPositionInWorld();
+            player = CreateObjectOnScene("Player", new GameObject(), 1, 1, Color.black, 1, FindAvailablePosition());
         }
         
 
@@ -149,7 +136,9 @@ namespace SmartSnake
             y = (int) position.y + y;
             if (!(y > mapWidth -1 || y < 0 || x < 0 || x > mapHeight -1)){
                 Vector2 newPosition = new Vector2 (x, y);
+                SetNodeAvailability(AvailableNodes, player.GetNode(), true);
                 player.GetNode().SetPosition(newPosition);
+                SetNodeAvailability(AvailableNodes, player.GetNode(), false);
                 cameraObj.transform.position = new Vector3 (newPosition.x, newPosition.y,-15f);
             }
         }
@@ -167,9 +156,7 @@ namespace SmartSnake
             objRndr.sprite = CreateSprite(width, height, color);
             objRndr.sortingOrder = layer;
             
-            //objectsOnMap.Add(obj);
-            //AddObjectToNode(obj, position); 
-
+            SetNodeAvailability(AvailableNodes, sObj.GetNode(), false);
             return sObj;
         }
 
@@ -190,34 +177,54 @@ namespace SmartSnake
             Rect rect = new Rect(0,0,width, height);
             return Sprite.Create(txtr2D,rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
         }
-        /*
+        
+        private Vector2 FindAvailablePosition()
+        {
+            Vector2 position;
+            
+            bool isAvailable = false;
+            do{
+                position = new Vector2()
+                {  
+                    x = Random.Range(0, mapWidth),
+                    y = Random.Range(0, mapHeight)
+                };
+
+                Node node = new Node (position);
+                if (AvailableNodes.Contains(node))
+                {
+                    isAvailable = true;
+                }
+
+            } while (isAvailable);
+            
+            return position;
+        }
+
         // Создаем сетку на карте
         private Node[,] CreateGrid(int width, int height) 
         {           
             Node[,] grid  = new Node [width, height];
             for (int x = 0; x < width; x++){
                 for (int y = 0; y < height; y++){
-                    Node node = new Node();
-                    node.SetPositionOnMap(new Vector2(x, y));
+                    Node node = new Node(new Vector2(x, y));
                     grid[x,y] = node;
-                    emptyNodes.Add(node);
+                    //SetNodeAvailability(AvailableNodes, node, true);
                 }
             }
             return grid;
         }
-        */
-/*
-        // Добавляем объект к клетке
-        private void AddObjectToNode(GameObject obj, Vector2 position)
+
+        public void SetNodeAvailability(List<Node> nodes, Node node, bool trueOrFalse)
         {
-            Node node = new Node();
-            node.SetPositionOnMap(position);
-            node.SetObject(obj);
-            emptyNodes.Remove(node);
-            mapGrid[(int)position.x, (int)position.y] = node;
+            if(trueOrFalse){
+                nodes.Add(node);
+            }
+            else{
+                nodes.Remove(node);
+            }
         }
 
-*/
         #endregion
 
 

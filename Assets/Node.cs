@@ -32,9 +32,7 @@ namespace SmartSnake
 
         public void SetPosition(Vector2 position)
         {
-            this.position = position;
-            this.obj.transform.position = new Vector3 (position.x, position.y, 0f);
-            
+            this.position = position;          
          
         }
 
