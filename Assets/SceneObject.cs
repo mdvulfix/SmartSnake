@@ -2,38 +2,59 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SceneObject : MonoBehaviour
+
+namespace SmartSnake
 {
     
-    private string name;
-    private GameObject obj;
-
-    public SceneObject(GameObject obj, string name)
+    public class SceneObject
     {
+        private Node node;
+        private GameObject obj;
+
         
-        SetName(name);
-        SetObject(obj);
+        public SceneObject(string name, GameObject obj, Vector2 position)
+        {   
+            SetObject(name, obj);
+            SetPositionOnMap(position);
+
+        }
+
+
+        public void SetObject(string name, GameObject obj)
+        { 
+            this.obj = obj;
+            this.obj.name = name;
+
+        }
+
+        public void SetPositionOnMap(Vector2 position)
+        { 
+           node = CreateNode(position);
+        }
+
+
+
+        private Node CreateNode(Vector2 position)
+        { 
+            Node node = new Node(position, obj);
+            return node;
+        }
+
+   
+
+        public Node GetNode()
+        {
+            return node;
+        }
+        
+
+        public GameObject GetObject()
+        {
+            return obj;
+        }
+        
 
 
     }
-
-    public void SetName(string name)
-    {
-        this.name = name;
-    }
-    public void SetObject(GameObject obj)
-    {
-        this.obj = obj;
-        this.obj.name = GetName();
-    }
-
-
-
-    public string GetName()
-    {
-        return name;
-    }
-
-
 
 }
