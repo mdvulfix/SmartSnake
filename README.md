@@ -1,2 +1,2 @@
 # SmartSnake
-Snake game
+My first super Snake game with smart brain!!!!
