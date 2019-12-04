@@ -8,10 +8,15 @@ namespace SmartSnake
     
     public class SceneObject
     {
-        private Node node;
-        private GameObject obj;
+        protected Node node;
+        protected GameObject obj;
 
-        
+        public SceneObject()
+        {   
+
+
+        }
+
         public SceneObject(string name, GameObject obj)
         {   
             SetObject(name, obj);
@@ -72,5 +77,11 @@ namespace SmartSnake
 
 
     }
+
+
+
+
+
+
 
 }

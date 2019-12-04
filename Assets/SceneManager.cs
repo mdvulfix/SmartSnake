@@ -10,9 +10,11 @@ namespace SmartSnake
     {
   
 
-        public SceneObject map;        
-        public SceneObject player;
+        public SceneObject map;    
         public SceneObject[] apples;
+        
+        public Snake head; 
+        public List<Snake> snake;
 
         public Node [,] nodes;
         public List<Node> availableNodes;
@@ -21,52 +23,68 @@ namespace SmartSnake
         private int mapHeight= 20;
 
         public GameObject       cameraObj;
-     
-
-        private List<GameObject> objectsOnMap;
-        
+           
 
         #region START 
         /////////////      
 
         // Запускаем игру:
         // 1. Создаем карту;
-        // 2. Создаем играка;
+        // 2. Создаем яблоки;
+        // 3. Создаем змейку;
+        // 4. Запускаем куратину;
+
         private void Start() 
         {
             
-            
-            
-
             CreateMap(mapWidth, mapHeight);
             CreateApple(15);
-            CreatePlayer();
-            StartCoroutine(Routine(0.035f));   
+            CreateSnake();
+            StartCoroutine(Routine(0.05f)); 
+             
         }
 
+   
 
         // Создаем карту:
-        // 1. Создаем спрайт карты;
-        // 2. Создаем сетку на карте;
+        // 1. Создаем массив доступных ячеек;
+        // 2. Все доступные ячейки записываем в лист достуаных ячеек;
+        // 3. Заполняем массив и лист ячейками;
+        // 4. Создаем карту;
 
         private void CreateMap(int width, int height)
         {
+            
             Debug.Log("Создаем карту...");
-            CreateGridOfNodes(nodes, mapWidth, mapHeight);
+            nodes  = new Node [width, height];
+            availableNodes = new List<Node>();
+
+            for (int x = 0; x < width; x++){
+                for (int y = 0; y < height; y++){
+                    Node node = new Node(new Vector2(x, y));
+                    nodes[x,y] = node;
+                    SetNodeAvailability(node, true);
+                }
+            }
             map = CreateObjectOnScene("Map", width, height, Color.white, 0);
                         
         }
 
-        public void CreatePlayer()
+        // Создаем змейку;
+        public void CreateSnake()
         {
-            Debug.Log("Создаем игрока...");
-            player = CreateObjectOnScene("Player", 1, 1, Color.black, 2);
-            player.SetNode(FindAvailablePosition());
-            SetNodeAvailability(player.GetNode(), false);
+            Debug.Log("Создаем змейку...");
+            head = (Snake)CreateObjectOnScene("Head", 1, 1, Color.black, 2);
+            snake.Add(head);
+
+            head.SetNode(GetAvailableNode());
+            SetNodeAvailability(head.GetNode(), false);
+
+            
 
         }
 
-
+        // Создаем яблоки;
         private void CreateApple(int amount)
         {
             Debug.Log("Создаем яблоки...");
@@ -75,7 +93,7 @@ namespace SmartSnake
             for (int i = 0; i < amount; i++)
             {               
                 apples[i] = CreateObjectOnScene("Apple" + i, 1, 1, Color.green, 1);
-                apples[i].SetNode(FindAvailablePosition());
+                apples[i].SetNode(GetAvailableNode());
                 SetNodeAvailability(apples[i].GetNode(), false);
                 
             }
@@ -88,6 +106,7 @@ namespace SmartSnake
         #region UPDARTE 
         ///////////////
 
+  
         // Обрабатываем события нажатия кнопок
         // 1. Определяем направление движения по нажатой кнопке
         // 2. Двигаем игрока по направлению движения
@@ -130,10 +149,10 @@ namespace SmartSnake
             return direction;
         }
 
+        
+        
         private void MovePlayer(int direction)
         {
-            
-            
             int x = 0;
             int y = 0;
             switch (direction)
@@ -147,16 +166,39 @@ namespace SmartSnake
             
             
             
-            Vector2 position = player.GetNode().GetNodePosition();
+            Vector2 position = head.GetNode().GetNodePosition();
             x = (int) position.x + x; 
             y = (int) position.y + y;
+            
             if (!(y > mapWidth -1 || y < 0 || x < 0 || x > mapHeight -1)){
-                if (!CheckNodeAvailability (nodes[x,y]))
+                if (CheckNodeAvailability (nodes[x,y]))
                 {
-                    SetNodeAvailability(player.GetNode(), true);
-                    player.SetNode(nodes[x,y]);
-                    SetNodeAvailability(player.GetNode(), false);
+                    SetNodeAvailability(head.GetNode(), true);
+                    head.SetNode(nodes[x,y]);
+                    SetNodeAvailability(head.GetNode(), false);
                     cameraObj.transform.position = new Vector3 (x, y,-15f);
+                }
+                else{
+
+                    foreach (var apple in apples)
+                    {
+                        if (apple.GetNode() == nodes[x,y]){
+                            
+                            apple.SetNode(GetAvailableNode());
+                            SetNodeAvailability(apple.GetNode(), false);
+                            
+                            head.SetNode(nodes[x,y]);
+                            cameraObj.transform.position = new Vector3 (x, y,-15f);
+                            
+                            Snake body = (Snake)CreateObjectOnScene("Body" + (snake.Count -1), 1, 1, Color.black, 2);
+                            snake.Add(body);
+                            
+                            body.SetParent(head, head.GetNode());
+
+                        }
+                        
+                    }
+
                 }
             }
         }
@@ -177,7 +219,7 @@ namespace SmartSnake
             return sObj;
         }
 
-        //Создаем спрайт карты
+        //Создаем спрайт объекта
         private Sprite CreateSprite(int width, int height, Color txtrColor) 
         {   
             
@@ -194,45 +236,14 @@ namespace SmartSnake
             Rect rect = new Rect(0,0,width, height);
             return Sprite.Create(txtr2D,rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
         }
-        
-        private Node FindAvailablePosition()
+
+        private Node GetAvailableNode()
         {
-            int x;
-            int y;
-            
-            bool isAvailable = false;
-            do{
-                x = Random.Range(0, mapWidth);
-                y = Random.Range(0, mapHeight);
-
-                if (availableNodes.Contains(nodes[x, y]))
-                {
-                    isAvailable = true;
-                }
-
-            } while (isAvailable);
-            
-            return nodes[x, y];
-        }
-
-        // Создаем сетку на карте
-        
-        private void CreateGridOfNodes(Node[,] nodes, int width, int height) 
-        {         
-            Debug.Log("Создаем сетку карты...");  
-            availableNodes = new List<Node>();
-            nodes  = new Node [width, height];
-            for (int x = 0; x < width; x++){
-                for (int y = 0; y < height; y++){
-                    Node node = new Node(new Vector2(x, y));
-                    nodes[x,y] = node;
-                    SetNodeAvailability(node, true);
-                }
-            }
-            Debug.Log("Создано ячеек: " + availableNodes.Count);
-
+            int randomNode = Random.Range(0, availableNodes.Count);
+            return availableNodes[randomNode];
 
         }
+
 
         public void SetNodeAvailability(Node node, bool trueOrFalse)
         {
