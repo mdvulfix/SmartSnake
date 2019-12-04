@@ -12,13 +12,19 @@ namespace SmartSnake
         private GameObject obj;
 
         
-        public SceneObject(string name, GameObject obj, Vector2 position)
+        public SceneObject(string name, GameObject obj)
         {   
             SetObject(name, obj);
-            SetPositionOnMap(position);
+            SetPositionInWorld(Vector3.zero);
 
         }
 
+        public SceneObject(string name, GameObject obj, Node node)
+        {   
+            SetObject(name, obj);
+            SetNode(node);
+
+        }
 
         public void SetObject(string name, GameObject obj)
         { 
@@ -27,31 +33,41 @@ namespace SmartSnake
 
         }
 
-        public void SetPositionOnMap(Vector2 position)
-        { 
-           node = CreateNode(position);
+        public GameObject GetObject()
+        {
+            return obj;
         }
 
 
-
-        private Node CreateNode(Vector2 position)
-        { 
-            Node node = new Node(position, obj);
-            return node;
+  
+        public void SetNode(Node node)
+        {
+            this.node = node;
+            Vector3 newPositionInWorld = new Vector3 (node.GetNodePosition().x, node.GetNodePosition().y, GetPositionInWorld().z);
+            SetPositionInWorld(newPositionInWorld);       
         }
-
-   
 
         public Node GetNode()
         {
             return node;
         }
         
+        public void SetPositionInWorld(Vector3 position)
+        { 
+           
+           this.obj.transform.position = position;
 
-        public GameObject GetObject()
-        {
-            return obj;
         }
+
+        public Vector3 GetPositionInWorld()
+        { 
+           
+           return this.obj.transform.position;
+
+        }
+        
+
+
         
 
 

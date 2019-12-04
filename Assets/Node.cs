@@ -9,54 +9,55 @@ namespace SmartSnake
 
     public class Node
     {
-        private Vector2 position = Vector2.zero;
-        private GameObject obj;
+        private Vector2 position;
+        //private GameObject obj;
 
        
        public Node (Vector2 position)
         {
-            SetPosition(position);
+            SetNodePosition(position);
         }
-
+        /*
         public Node (Vector2 position, GameObject obj)
         {
             SetObject(obj);
-            SetPosition(position);
+            SetPositionOnMap(position);
         }
+
 
         public void SetObject(GameObject obj)
         {
             this.obj = obj;
             this.obj.transform.position = new Vector3 (position.x, position.y, 0f);
         }
+        */
 
-        public void SetPosition(Vector2 position)
-        {
-            this.position = position;          
-         
+        
+        
+        public void SetNodePosition(Vector2 position)
+        { 
+            this.position = position;
+
+            //Vector3 positionInWorld = obj.transform.position;
+            //this.obj.transform.position = new Vector3 (position.x, position.y, positionInWorld.z);
         }
 
+        public Vector2 GetNodePosition()
+        {
+            return position;
+        }
+        
+        /*
         public GameObject GetObject()
         {
            return obj;
         }
-
-        public Vector2 GetPosition()
-        {
-            return position;
-        }
+        */
 
 
-        public bool ThisNodeHaveObject()
-        {
-            bool haveObj = false;
-            if (obj) {
-                haveObj = true;
-            }
-            else {
-                haveObj = false;
-            }
-            return haveObj;
-        }
+
+
+
     }
+
 }

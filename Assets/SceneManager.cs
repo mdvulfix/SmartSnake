@@ -12,9 +12,10 @@ namespace SmartSnake
 
         public SceneObject map;        
         public SceneObject player;
+        public SceneObject[] apples;
 
-        private Node [,] grid;
-        private List<Node> AvailableNodes;
+        public Node [,] nodes;
+        public List<Node> availableNodes;
 
         private int mapWidth = 20;
         private int mapHeight= 20;
@@ -25,17 +26,20 @@ namespace SmartSnake
         private List<GameObject> objectsOnMap;
         
 
-        #region START /////////////////////////////       
+        #region START 
+        /////////////      
 
         // Запускаем игру:
         // 1. Создаем карту;
         // 2. Создаем играка;
-        private void Awake() 
+        private void Start() 
         {
             
-            //objectsOnMap = new List<GameObject>();
+            
+            
+
             CreateMap(mapWidth, mapHeight);
-            CreateApple(5);
+            CreateApple(15);
             CreatePlayer();
             StartCoroutine(Routine(0.035f));   
         }
@@ -47,30 +51,42 @@ namespace SmartSnake
 
         private void CreateMap(int width, int height)
         {
+            Debug.Log("Создаем карту...");
+            CreateGridOfNodes(nodes, mapWidth, mapHeight);
+            map = CreateObjectOnScene("Map", width, height, Color.white, 0);
+                        
+        }
 
-            grid = CreateGrid(width, height);
-            map = CreateObjectOnScene("Map", new GameObject(), width, height, Color.white, 0, Vector2.zero);
-            
+        public void CreatePlayer()
+        {
+            Debug.Log("Создаем игрока...");
+            player = CreateObjectOnScene("Player", 1, 1, Color.black, 2);
+            player.SetNode(FindAvailablePosition());
+            SetNodeAvailability(player.GetNode(), false);
+
         }
 
 
         private void CreateApple(int amount)
         {
+            Debug.Log("Создаем яблоки...");
+            apples = new SceneObject[amount];
+            
             for (int i = 0; i < amount; i++)
             {               
-                SceneObject apple = CreateObjectOnScene("Apple" + i,new GameObject(), 1, 1, Color.green, 1, FindAvailablePosition());
+                apples[i] = CreateObjectOnScene("Apple" + i, 1, 1, Color.green, 1);
+                apples[i].SetNode(FindAvailablePosition());
+                SetNodeAvailability(apples[i].GetNode(), false);
+                
             }
         }
 
-        public void CreatePlayer()
-        {
-            player = CreateObjectOnScene("Player", new GameObject(), 1, 1, Color.black, 1, FindAvailablePosition());
-        }
+
         
 
         #endregion
-    
-        #region UPDARTE ///////////////////////////
+        #region UPDARTE 
+        ///////////////
 
         // Обрабатываем события нажатия кнопок
         // 1. Определяем направление движения по нажатой кнопке
@@ -131,32 +147,33 @@ namespace SmartSnake
             
             
             
-            Vector2 position = player.GetNode().GetPosition();
+            Vector2 position = player.GetNode().GetNodePosition();
             x = (int) position.x + x; 
             y = (int) position.y + y;
             if (!(y > mapWidth -1 || y < 0 || x < 0 || x > mapHeight -1)){
-                Vector2 newPosition = new Vector2 (x, y);
-                SetNodeAvailability(AvailableNodes, player.GetNode(), true);
-                player.GetNode().SetPosition(newPosition);
-                SetNodeAvailability(AvailableNodes, player.GetNode(), false);
-                cameraObj.transform.position = new Vector3 (newPosition.x, newPosition.y,-15f);
+                if (!CheckNodeAvailability (nodes[x,y]))
+                {
+                    SetNodeAvailability(player.GetNode(), true);
+                    player.SetNode(nodes[x,y]);
+                    SetNodeAvailability(player.GetNode(), false);
+                    cameraObj.transform.position = new Vector3 (x, y,-15f);
+                }
             }
         }
         #endregion
-
-        #region UTILITY ///////////////////////////
+        #region UTILITY 
+        ///////////////
 
         //Создаем объекты на сцене
-        private SceneObject CreateObjectOnScene(string name, GameObject obj, int width, int height, Color color, int layer, Vector2 position)
+        private SceneObject CreateObjectOnScene(string name, int width, int height, Color color, int layer)
         {
-            
-            SceneObject sObj = new SceneObject(name, obj, position);
+            GameObject obj = new GameObject(name);
+            SceneObject sObj = new SceneObject(name, obj);
 
             SpriteRenderer objRndr = obj.AddComponent<SpriteRenderer>();
             objRndr.sprite = CreateSprite(width, height, color);
             objRndr.sortingOrder = layer;
             
-            SetNodeAvailability(AvailableNodes, sObj.GetNode(), false);
             return sObj;
         }
 
@@ -178,55 +195,67 @@ namespace SmartSnake
             return Sprite.Create(txtr2D,rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
         }
         
-        private Vector2 FindAvailablePosition()
+        private Node FindAvailablePosition()
         {
-            Vector2 position;
+            int x;
+            int y;
             
             bool isAvailable = false;
             do{
-                position = new Vector2()
-                {  
-                    x = Random.Range(0, mapWidth),
-                    y = Random.Range(0, mapHeight)
-                };
+                x = Random.Range(0, mapWidth);
+                y = Random.Range(0, mapHeight);
 
-                Node node = new Node (position);
-                if (AvailableNodes.Contains(node))
+                if (availableNodes.Contains(nodes[x, y]))
                 {
                     isAvailable = true;
                 }
 
             } while (isAvailable);
             
-            return position;
+            return nodes[x, y];
         }
 
         // Создаем сетку на карте
-        private Node[,] CreateGrid(int width, int height) 
-        {           
-            Node[,] grid  = new Node [width, height];
+        
+        private void CreateGridOfNodes(Node[,] nodes, int width, int height) 
+        {         
+            Debug.Log("Создаем сетку карты...");  
+            availableNodes = new List<Node>();
+            nodes  = new Node [width, height];
             for (int x = 0; x < width; x++){
                 for (int y = 0; y < height; y++){
                     Node node = new Node(new Vector2(x, y));
-                    grid[x,y] = node;
-                    //SetNodeAvailability(AvailableNodes, node, true);
+                    nodes[x,y] = node;
+                    SetNodeAvailability(node, true);
                 }
             }
-            return grid;
+            Debug.Log("Создано ячеек: " + availableNodes.Count);
+
+
         }
 
-        public void SetNodeAvailability(List<Node> nodes, Node node, bool trueOrFalse)
+        public void SetNodeAvailability(Node node, bool trueOrFalse)
         {
             if(trueOrFalse){
-                nodes.Add(node);
+                availableNodes.Add(node);
             }
             else{
-                nodes.Remove(node);
+                availableNodes.Remove(node);
             }
+        }
+
+        public bool CheckNodeAvailability(Node node)
+        {
+            bool isAvailable = false;
+            if (availableNodes.Contains(node))
+            {
+                isAvailable = true;
+            }
+            return isAvailable;
+
         }
 
         #endregion
-
 
     }
 }
