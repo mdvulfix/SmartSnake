@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -13,8 +14,8 @@ namespace SmartSnake
         public SceneObject map;    
         public SceneObject[] apples;
         
-        public Snake head; 
-        public List<Snake> snake;
+        public SceneObject head; 
+        public List<SceneObject> snake;
 
         public Node [,] nodes;
         public List<Node> availableNodes;
@@ -74,7 +75,9 @@ namespace SmartSnake
         public void CreateSnake()
         {
             Debug.Log("Создаем змейку...");
-            head = (Snake)CreateObjectOnScene("Head", 1, 1, Color.black, 2);
+            head = CreateObjectOnScene("Snake", 1, 1, Color.black, 2);
+            
+            snake = new List<SceneObject>();
             snake.Add(head);
 
             head.SetNode(GetAvailableNode());
@@ -165,17 +168,29 @@ namespace SmartSnake
             }
             
             
-            
-            Vector2 position = head.GetNode().GetNodePosition();
+            Vector2 position = snake.Last().GetNode().GetNodePosition();
             x = (int) position.x + x; 
             y = (int) position.y + y;
             
             if (!(y > mapWidth -1 || y < 0 || x < 0 || x > mapHeight -1)){
                 if (CheckNodeAvailability (nodes[x,y]))
                 {
-                    SetNodeAvailability(head.GetNode(), true);
-                    head.SetNode(nodes[x,y]);
-                    SetNodeAvailability(head.GetNode(), false);
+                    SetNodeAvailability(snake.Last().GetNode(), true);
+                    
+                    if(snake.Count==1)
+                    {
+                        snake.Last().SetNode(nodes[x,y]);
+                    }
+                    else
+                    {
+                        snake[snake.Count-1].GetParentNodeAndSetChildNode(nodes[x,y]);
+                        snake[snake.Count-2].GetParentNodeAndSetChildNode(snake[snake.Count-1].GetNode());
+                        //for (int i = snake.Count; i > 1; i--)
+                        //{
+                           // snake[i].GetParentNodeAndSetChildNode(snake[i-1].GetNode());
+                        //}
+                    }
+                    SetNodeAvailability(snake.Last().GetNode(), false);
                     cameraObj.transform.position = new Vector3 (x, y,-15f);
                 }
                 else{
@@ -186,15 +201,13 @@ namespace SmartSnake
                             
                             apple.SetNode(GetAvailableNode());
                             SetNodeAvailability(apple.GetNode(), false);
+                                                       
+                            SceneObject newHead = CreateObjectOnScene("Snake" + (snake.Count -1), 1, 1, Color.black, 2);
+                            newHead.SetChild(snake.Last());
+                            newHead.SetNode(nodes[x,y]);
                             
-                            head.SetNode(nodes[x,y]);
                             cameraObj.transform.position = new Vector3 (x, y,-15f);
-                            
-                            Snake body = (Snake)CreateObjectOnScene("Body" + (snake.Count -1), 1, 1, Color.black, 2);
-                            snake.Add(body);
-                            
-                            body.SetParent(head, head.GetNode());
-
+                            snake.Add(newHead);
                         }
                         
                     }

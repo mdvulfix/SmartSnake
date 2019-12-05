@@ -8,19 +8,16 @@ namespace SmartSnake
     
     public class SceneObject
     {
-        protected Node node;
-        protected GameObject obj;
-
-        public SceneObject()
-        {   
+        private Node node;
+        private GameObject obj;
+        private SceneObject child;
 
 
-        }
 
         public SceneObject(string name, GameObject obj)
         {   
             SetObject(name, obj);
-            SetPositionInWorld(Vector3.zero);
+            SetPositionInWorld(obj, Vector3.zero);
 
         }
 
@@ -48,8 +45,30 @@ namespace SmartSnake
         public void SetNode(Node node)
         {
             this.node = node;
-            Vector3 newPositionInWorld = new Vector3 (node.GetNodePosition().x, node.GetNodePosition().y, GetPositionInWorld().z);
-            SetPositionInWorld(newPositionInWorld);       
+            Vector3 newPositionInWorld = new Vector3 (node.GetNodePosition().x, node.GetNodePosition().y, GetPositionInWorld(obj).z);
+            SetPositionInWorld(obj, newPositionInWorld);
+        }
+
+        public void SetChildNode(Node node)
+        {
+            this.child.SetNode(node);
+            Vector3 newPositionInWorld = new Vector3 (node.GetNodePosition().x, node.GetNodePosition().y, GetPositionInWorld(this.child.GetObject()).z);
+            SetPositionInWorld(this.child.GetObject(), newPositionInWorld);
+        }
+
+        public void GetParentNodeAndSetChildNode(Node parent)
+        {
+            Node child = this.node;
+            this.node = parent;
+            SetNode(parent);
+            SetChildNode(child);
+            
+        }
+
+        public void SetChild(SceneObject child)
+        {
+            this.child = child;
+    
         }
 
         public Node GetNode()
@@ -57,17 +76,17 @@ namespace SmartSnake
             return node;
         }
         
-        public void SetPositionInWorld(Vector3 position)
+        public void SetPositionInWorld(GameObject obj, Vector3 position)
         { 
            
-           this.obj.transform.position = position;
+           obj.transform.position = position;
 
         }
 
-        public Vector3 GetPositionInWorld()
+        public Vector3 GetPositionInWorld(GameObject obj)
         { 
            
-           return this.obj.transform.position;
+           return obj.transform.position;
 
         }
         
