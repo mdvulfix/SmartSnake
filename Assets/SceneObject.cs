@@ -6,8 +6,10 @@ using UnityEngine;
 namespace SmartSnake
 {
     
+    
     public class SceneObject
     {
+        /*
         private Node node;
         private GameObject obj;
         private SceneObject child;
@@ -93,7 +95,7 @@ namespace SmartSnake
 
 
         
-
+        */
 
     }
 

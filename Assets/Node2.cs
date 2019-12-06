@@ -7,13 +7,13 @@ namespace SmartSnake
 {
     
 
-    public class Node
+    public class Node2
     {
         private Vector2 position;
         //private GameObject obj;
 
        
-       public Node (Vector2 position)
+       public Node2 (Vector2 position)
         {
             SetNodePosition(position);
         }

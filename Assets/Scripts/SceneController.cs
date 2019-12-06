@@ -1,16 +1,100 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 
 namespace SmartSnake
 {
-    
-    public class SceneManager : MonoBehaviour
+    public class SceneController : MonoBehaviour
     {
   
-        /*
+    [SerializeField]
+    private int width, height;
+
+
+
+        private void Awake() 
+        {
+            
+        }
+
+        private void Start() 
+        {
+            CreateMap(width, height);
+            CreateSnake();
+
+
+        }
+
+        void CreateMap(int width, int height)
+        {
+            // Создаем карту;
+            GameObject mapObj = CreateObject("Map", "Scene", width, height, Color.white, 0);
+            Node [,] nodes = new Node [width, height];
+
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                    nodes [x,y]  = new Node (x, y);
+                    
+        }
+
+        void CreateSnake()
+        {
+            // Создаем карту;
+            GameObject snake = CreateObject("Snake", "Scene", 1, 1, Color.white, 1);
+            GameObject head = CreateObject("Head", "Snake", 1, 1, Color.black, 2);
+                    
+        }
+
+        //Создаем объект
+        private GameObject CreateObject(string name, string parent, int width, int height, Color color, int layer)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(GameObject.Find(parent).transform);
+            
+            SpriteRenderer objRndr = obj.AddComponent<SpriteRenderer>();
+            objRndr.sprite = CreateSprite(width, height, color);
+            objRndr.sortingOrder = layer;
+            
+            return obj;
+        }
+
+        //Создаем спрайт объекта
+        private Sprite CreateSprite(int width, int height, Color color) 
+        {   
+            
+            Texture2D texture = new Texture2D (width, height);
+            texture.filterMode = FilterMode.Bilinear;
+            
+            for (int x = 0; x < width; x++){
+                for (int y = 0; y < height; y++){
+                    texture.SetPixel(x, y, color);
+                }
+            }
+            texture.Apply();
+            
+            Rect rect = new Rect(0,0,width, height);
+            return Sprite.Create(texture, rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 
         public SceneObject map;    
         public SceneObject[] apples;
         
@@ -23,8 +107,7 @@ namespace SmartSnake
         private int mapWidth = 20;
         private int mapHeight= 20;
 
-        public GameObject       cameraObj;
-           
+          
 
         #region START 
         /////////////      
