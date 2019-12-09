@@ -11,7 +11,11 @@ namespace SmartSnake
     [SerializeField]
     private int width, height;
 
+    GameObject snake;
+    GameObject map;
+    GameObject[] apples;
 
+    Node[,] nodes;
 
         private void Awake() 
         {
@@ -22,15 +26,17 @@ namespace SmartSnake
         {
             CreateMap(width, height);
             CreateSnake();
-
+            CreateApple(1);
 
         }
 
         void CreateMap(int width, int height)
         {
             // Создаем карту;
-            GameObject mapObj = CreateObject("Map", "Scene", width, height, Color.white, 0);
-            Node [,] nodes = new Node [width, height];
+            map = CreateObject("Map");
+            CreateSprite(map, width, height, Color.white, 0);
+            
+            nodes = new Node [width, height];
 
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
@@ -40,29 +46,53 @@ namespace SmartSnake
 
         void CreateSnake()
         {
-            // Создаем карту;
-            GameObject snake = CreateObject("Snake", "Scene", 1, 1, Color.white, 1);
-            GameObject head = CreateObject("Head", "Snake", 1, 1, Color.black, 2);
-                    
+            // Создаем змейку;
+            snake    = CreateObject("Snake");
+            GameObject head     = CreateObject("Head", "Snake");
+            CreateSprite(head, 1, 1, Color.black, 2);
+            SetNode(head, 5, 5);
+            
+            GameObject camera = CreateObject("Camera", "Snake");
+            CreateCamera(camera); 
+
         }
 
+
+        private void CreateApple(int amount)
+        {
+ 
+            apples = new GameObject[amount];
+            for (int i = 0; i < amount; i++)
+            {               
+                apples[i] = CreateObject("Apple" + i);
+                CreateSprite(apples[i], 1, 1, Color.green, 1);
+                //apples[i].SetNode(GetAvailableNode());
+
+                SetNode(apples[i] , Random.Range(0, width*height), Random.Range(0, width*height));
+                
+            }
+        }
+
+
+
+
+
+
+
+
         //Создаем объект
-        private GameObject CreateObject(string name, string parent, int width, int height, Color color, int layer)
+        private GameObject CreateObject(string name, string parent = "Scene")
         {
             GameObject obj = new GameObject(name);
             obj.transform.SetParent(GameObject.Find(parent).transform);
-            
-            SpriteRenderer objRndr = obj.AddComponent<SpriteRenderer>();
-            objRndr.sprite = CreateSprite(width, height, color);
-            objRndr.sortingOrder = layer;
             
             return obj;
         }
 
         //Создаем спрайт объекта
-        private Sprite CreateSprite(int width, int height, Color color) 
+        private void CreateSprite(GameObject obj, int width, int height, Color color, int layer) 
         {   
-            
+            SpriteRenderer objRndr = obj.AddComponent<SpriteRenderer>();
             Texture2D texture = new Texture2D (width, height);
             texture.filterMode = FilterMode.Bilinear;
             
@@ -74,10 +104,32 @@ namespace SmartSnake
             texture.Apply();
             
             Rect rect = new Rect(0,0,width, height);
-            return Sprite.Create(texture, rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
+            objRndr.sprite =  Sprite.Create(texture, rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
+        }
+        
+        private void CreateCamera(GameObject obj) 
+        {   
+            Camera objCam = obj.AddComponent<Camera>();
+            obj.transform.position = new Vector3(0 ,0 , -15f);
         }
 
 
+
+        /*
+        private Node GetAvailableNode()
+        {
+            //int randomNode = Random.Range(0, availableNodes.Count);
+            //return availableNodes[randomNode];
+
+        }
+        */
+
+        private void SetNode(GameObject obj, int x, int y)
+        {
+            nodes[x,y].SetObject(obj);
+        }
+
+ 
 
 
 

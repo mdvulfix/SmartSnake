@@ -15,17 +15,13 @@ namespace SmartSnake
         int y;
         bool active;
 
+        GameObject obj;
+
 
         public Node(int x, int y)
         {
             SetPosition(x, y);
             SetActive(false);
-        }
-
-        public Node(int x, int y, bool active)
-        {
-            SetPosition(x, y);
-            SetActive(active);
         }
 
         void SetPosition(int x, int y)
@@ -39,6 +35,23 @@ namespace SmartSnake
             this.active = active;
         }
 
+        public void SetObject(GameObject obj)
+        {
+            this.obj = obj;
+            this.obj.transform.position = new Vector3(x, y, 0f);
+            SetActive(true);
+        }
         
+        public GameObject GetObject()
+        {
+            return obj;
+        }
+
+        void RemoveObject()
+        {
+            this.obj = null;
+            SetActive(false);
+
+        }
     }
 }
