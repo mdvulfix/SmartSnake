@@ -16,6 +16,14 @@ namespace SmartSnake
     GameObject[] apples;
 
     Node[,] nodes;
+    List<Node> availableNodes;
+
+    enum Direction {up, down, left, right, noDirection}
+
+    #region start
+        
+    
+
 
         private void Awake() 
         {
@@ -26,7 +34,7 @@ namespace SmartSnake
         {
             CreateMap(width, height);
             CreateSnake();
-            CreateApple(1);
+            CreateApple(5);
 
         }
 
@@ -37,10 +45,15 @@ namespace SmartSnake
             CreateSprite(map, width, height, Color.white, 0);
             
             nodes = new Node [width, height];
+            availableNodes = new List<Node>();
 
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
+                {
                     nodes [x,y]  = new Node (x, y);
+                    SetNodeAvailability(nodes [x,y], true);
+                }
+                    
                     
         }
 
@@ -50,10 +63,13 @@ namespace SmartSnake
             snake    = CreateObject("Snake");
             GameObject head     = CreateObject("Head", "Snake");
             CreateSprite(head, 1, 1, Color.black, 2);
-            SetNode(head, 5, 5);
+            SetNode(head, GetAvailableNode());
             
             GameObject camera = CreateObject("Camera", "Snake");
             CreateCamera(camera); 
+            
+            
+            camera.transform.position = SetCameraPosition(head);
 
         }
 
@@ -64,21 +80,110 @@ namespace SmartSnake
             apples = new GameObject[amount];
             for (int i = 0; i < amount; i++)
             {               
+                
                 apples[i] = CreateObject("Apple" + i);
-                CreateSprite(apples[i], 1, 1, Color.green, 1);
-                //apples[i].SetNode(GetAvailableNode());
-
-                SetNode(apples[i] , Random.Range(0, width*height), Random.Range(0, width*height));
+                CreateSprite(apples[i], 1, 1, Color.green, 1);               
+                SetNode(apples[i] , GetAvailableNode());
                 
             }
         }
 
+    #endregion
+
+    #region update
+
+        // Обрабатываем события нажатия кнопок
+        // 1. Определяем направление движения по нажатой кнопке
+        // 2. Двигаем игрока по направлению движения
+        
+        private IEnumerator Routine (float updateTime) 
+        {
+            WaitForSeconds time = new WaitForSeconds (updateTime);
+            while(true)
+            {
+                yield return time;
+                MoveSnake((int)GetDirection());
+            }
+        }
+
+        
+        
+        private Direction GetDirection()
+        {
+            Direction direction = Direction.noDirection;
+
+            if(Input.GetButton("Up")){
+                direction = Direction.up;
+            } 
+
+            if(Input.GetButton("Down")){
+                direction =  Direction.down;                   
+            }  
+
+            if(Input.GetButton("Left")){
+                direction = Direction.left;
+            }
+
+            if(Input.GetButton("Right")){
+                direction = Direction.right;
+            }
+        
+            if(Input.GetButtonUp("Up") || Input.GetButtonUp("Down") || Input.GetButtonUp("Left") || Input.GetButtonUp("Right")){
+                direction = Direction.noDirection;
+            }
+            return direction;
+        }
+
+        
+        private void MoveSnake(int direction)
+        {
+            int x = 0;
+            int y = 0;
+            switch (direction)
+            {   
+                case 0: y = 1; break;
+                case 1: y = -1; break;
+                case 2: x = -1; break;
+                case 3: x = 1; break;
+                case 4: x = 0; y = 0; break;
+            }
+            
+            
 
 
+            Vector2 position;
+            x = (int) position.x + x; 
+            y = (int) position.y + y;
+            
+            /*
+            if (!(y > mapWidth -1 || y < 0 || x < 0 || x > mapHeight -1)){
+                if (CheckNodeAvailability (nodes[x,y]))
+                {
+                    SetNodeAvailability(snake.Last().GetNode(), true);
+                    
+                    if(snake.Count==1)
+                    {
+                        snake.Last().SetNode(nodes[x,y]);
+                    }
+                    else
+                    {
+                        snake[snake.Count-1].GetParentNodeAndSetChildNode(nodes[x,y]);
+                        snake[snake.Count-2].GetParentNodeAndSetChildNode(snake[snake.Count-1].GetNode());
+                        //for (int i = snake.Count; i > 1; i--)
+                        //{
+                           // snake[i].GetParentNodeAndSetChildNode(snake[i-1].GetNode());
+                        //}
+                    }
+                    SetNodeAvailability(snake.Last().GetNode(), false);
+                    cameraObj.transform.position = new Vector3 (x, y,-15f);
+                }
+            }
+            */
+        }
 
+    #endregion
 
-
-
+    #region support
 
         //Создаем объект
         private GameObject CreateObject(string name, string parent = "Scene")
@@ -110,29 +215,42 @@ namespace SmartSnake
         private void CreateCamera(GameObject obj) 
         {   
             Camera objCam = obj.AddComponent<Camera>();
-            obj.transform.position = new Vector3(0 ,0 , -15f);
+
+        }
+
+        public Vector3 SetCameraPosition(GameObject obj)
+        {
+            return new Vector3(obj.transform.position.x ,obj.transform.position.y, -15f);
         }
 
 
 
-        /*
+
         private Node GetAvailableNode()
         {
-            //int randomNode = Random.Range(0, availableNodes.Count);
-            //return availableNodes[randomNode];
+            int randomNode = Random.Range(0, availableNodes.Count);
+            return availableNodes[randomNode];
 
         }
-        */
 
-        private void SetNode(GameObject obj, int x, int y)
+        private void SetNode(GameObject obj, Node node)
         {
-            nodes[x,y].SetObject(obj);
+            nodes[node.x, node.y].SetObject(obj);
+            SetNodeAvailability(node, false);
         }
 
  
+        public void SetNodeAvailability(Node node, bool trueOrFalse)
+        {
+            if(trueOrFalse){
+                availableNodes.Add(node);
+            }
+            else{
+                availableNodes.Remove(node);
+            }
+        }
 
-
-
+    #endregion
 
 
 
