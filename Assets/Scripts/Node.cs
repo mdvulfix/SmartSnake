@@ -11,20 +11,30 @@ namespace SmartSnake
     public class Node
     {
 
-        public int x {get; private set;}
-        public int y {get; private set;}
-
+        public float x {get; private set;}
+        public float y {get; private set;}
 
         GameObject obj;
 
 
-        public Node(int x, int y)
+        public Node(Vector2 position)
         {
-            this.x = x;
-            this.y = y;
+            SetPosition(position);
+            
         }
 
+        public void SetPosition(Vector2 position)
+        {
+            x = position.x;
+            y = position.y;
+        } 
 
+        public Vector2 GetPosition()
+        {
+            return new Vector2 (x, y);
+
+        }    
+        
 
         public void SetObject(GameObject obj)
         {

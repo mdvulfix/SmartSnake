@@ -7,23 +7,34 @@ namespace SmartSnake
 {
     
     
-    public class SceneObject
+    public static class Player
     {
+
+        public static float x {get; private set;}
+        public static float y {get; private set;}
+
+        public static void SetPosition(Vector2 position)
+        {
+            x = position.x;
+            y = position.y;
+        } 
+
+        public static Vector2 GetPosition()
+        {
+            return new Vector2 (x, y);
+        }  
+
+
+
+
         /*
-        private Node node;
-        private GameObject obj;
-        private SceneObject child;
-
-
-
-        public SceneObject(string name, GameObject obj)
-        {   
-            SetObject(name, obj);
-            SetPositionInWorld(obj, Vector3.zero);
-
+        public static Node GetNode()
+        {
+            return Player.node;
         }
-
-        public SceneObject(string name, GameObject obj, Node node)
+        */
+        /*
+        public SceneObject(Node node)
         {   
             SetObject(name, obj);
             SetNode(node);
@@ -44,12 +55,7 @@ namespace SmartSnake
 
 
   
-        public void SetNode(Node node)
-        {
-            this.node = node;
-            Vector3 newPositionInWorld = new Vector3 (node.GetNodePosition().x, node.GetNodePosition().y, GetPositionInWorld(obj).z);
-            SetPositionInWorld(obj, newPositionInWorld);
-        }
+
 
         public void SetChildNode(Node node)
         {
