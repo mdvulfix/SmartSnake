@@ -7,21 +7,30 @@ namespace SmartSnake
 {
     
     
-    public static class Player
+    static class Player
     {
 
-        public static float x {get; private set;}
-        public static float y {get; private set;}
+        static Position3D position;
+        static GameObject camera;
+        
+        
 
-        public static void SetPosition(Vector2 position)
+        public static void SetPosition(Position3D aPosition)
         {
-            x = position.x;
-            y = position.y;
+            position = aPosition;
+            SetCamera(camera);
         } 
 
-        public static Vector2 GetPosition()
+        public static void SetCamera(GameObject aCamera)
         {
-            return new Vector2 (x, y);
+            camera = aCamera;
+            camera.transform.position = new Vector3 (position.ToVector3().x, position.ToVector3().y, camera.transform.position.z);
+
+        } 
+
+        public static Position3D GetPosition()
+        {
+            return position;
         }  
 
 
