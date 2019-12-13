@@ -28,11 +28,9 @@ namespace SmartSnake
             return position;
         } 
 
-        public void SetObject(GameObject obj, string parent = "Scene")
+        public void SetObject(GameObject obj)
         { 
             this.obj = obj;
-            this.obj.transform.SetParent(GameObject.Find(parent).transform);
-
         }
 
         public GameObject GetObject()

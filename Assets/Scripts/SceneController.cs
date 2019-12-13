@@ -59,8 +59,8 @@ namespace SmartSnake
         {
             if (! (obj is Position)) return false;
         
-            Position p = (Position) obj;
-            return x == p.x && y == p.y && z == p.z;
+            Position position = (Position) obj;
+            return x == position.x && y == position.y && z == position.z;
         }
     
         public override int GetHashCode()
@@ -84,7 +84,8 @@ namespace SmartSnake
     {
   
         [SerializeField]
-        int width =10, height =10;
+        int width =10, height =10 , amountOfApples = 5;
+
         
         GameObject map; 
         Position[,] map2D;
@@ -92,26 +93,26 @@ namespace SmartSnake
         
         GameObject player;
         List<SceneObject> snake;
-        
-        SceneObject[] apples;
+        List<SceneObject> apples;
 
-        enum Direction {up, down, left, right, noDirection}
+        int direction = 0;
+
+        bool startMove;
 
         #region start
         
         private void Awake() 
         {
+            CreateMap(width, height);
             
+            CreateSnake();
+            CreateApple(amountOfApples);
         }
 
         private void Start() 
         {
-            CreateMap(width, height);
-            
-            CreateSnake();
-            CreateApple(5);
 
-            StartCoroutine(Routine(0.05f)); 
+            StartCoroutine(Routine(0.075f)); 
 
         }
 
@@ -119,7 +120,7 @@ namespace SmartSnake
         {
             // Создаем карту;
             map = CreateObject("Map");
-            CreateSprite(map, width, height, Color.white, 0);
+            CreateSprite(map, width, height);
             
             map2D = new Position[width, height];
             allPositions = new List<Position>();
@@ -131,7 +132,11 @@ namespace SmartSnake
                     map2D [x,y]  = new Position(x, y);
                     allPositions.Add(map2D [x,y]);
                 }
-            }   
+            }  
+
+            GameObject objCamera = CreateObject("Camera", "Map");
+            objCamera.transform.localPosition = new Vector3 (width/2f, height/2f,-10f);
+            objCamera.AddComponent<Camera>().fieldOfView = 100f; 
 
             
       
@@ -141,37 +146,46 @@ namespace SmartSnake
         {
             // Создаем змейку;
             CreateObject("Snake");
-            GameObject objHead = CreateObject("Head", "Snake");
 
-            SceneObject sobjHead = CreateObjectOnMap(objHead, GetAvailablePosition());
-            CreateSprite(sobjHead.GetObject(), 1, 1, Color.black, 2);
+            SceneObject head = CreateObjectOnMap(CreateObject("Head", "Snake"), GetAvailablePosition());
+            SetPositionAvailability(head.GetPosition(), false);
+            CreateSprite(obj: head.GetObject(), color: Color.black, layer: 2);
 
-            GameObject objCamera = CreateObject("Camera", "Head");
-            objCamera.transform.localPosition = new Vector3 (0, 0,-15f);
-            objCamera.AddComponent<Camera>().fieldOfView = 100f;
+
+
 
             snake = new List<SceneObject>();
-            snake.Add(sobjHead);
+            snake.Add(head);
         }
 
 
         private void CreateApple(int amount)
         {
  
-            apples = new SceneObject[amount];
-            GameObject[] objApples = new GameObject[amount];
+            apples = new List<SceneObject>();
             for (int i = 0; i < amount; i++)
             {               
-                objApples[i] = CreateObject("Apple" + i);
-                
-                apples[i] = CreateObjectOnMap(objApples[i], GetAvailablePosition());
-                CreateSprite(apples[i].GetObject(), 1, 1, Color.green, 1);                             
+                SceneObject apple = CreateObjectOnMap(CreateObject("Apple" + i), GetAvailablePosition());
+                SetPositionAvailability(apple.GetPosition(), false);
+                CreateSprite(obj: apple.GetObject(), color: Color.green, layer: 1);   
+
+                apples.Add(apple);
+
             }
         }
 
     #endregion
 
     #region update
+
+
+        private void Update() 
+        {
+            
+
+        }
+
+
 
         // Обрабатываем события нажатия кнопок
         // 1. Определяем направление движения по нажатой кнопке
@@ -183,106 +197,110 @@ namespace SmartSnake
             while(true)
             {
                 yield return time;
-                MoveSnake((int)GetDirection());
+                MoveSnake(GetDirection(0, out direction));
             }
         }
 
-        private Direction GetDirection()
+        private int GetDirection(int start, out int finish)
         {
-            Direction direction = Direction.noDirection;
-
+            int direction = start;
+            //bool isMoving = true;
             if(Input.GetButton("Up")){
-                direction = Direction.up;
+                direction = 1;
             } 
-
-            if(Input.GetButton("Down")){
-                direction =  Direction.down;                   
+            else if(Input.GetButton("Down")){
+                direction = 2;                   
             }  
-
-            if(Input.GetButton("Left")){
-                direction = Direction.left;
+            else if(Input.GetButton("Left")){
+                direction = 3;
             }
-
-            if(Input.GetButton("Right")){
-                direction = Direction.right;
+            else if(Input.GetButton("Right")){
+                direction = 4;
             }
-        
-            if(Input.GetButtonUp("Up") || Input.GetButtonUp("Down") || Input.GetButtonUp("Left") || Input.GetButtonUp("Right")){
-                direction = Direction.noDirection;
+            else if(Input.GetButtonUp("Up") || Input.GetButtonUp("Down") || Input.GetButtonUp("Left") || Input.GetButtonUp("Right"))
+            {
+                direction = 0;
             }
+            
+            
+            finish = direction;
             return direction;
         }
 
         
         private void MoveSnake(int direction)
         {
-            SceneObject head = snake[0];
 
-            Position start = head.GetPosition();
             Position step = new Position();
             switch (direction)
             {   
-                case 0: step.y = 1; break;
-                case 1: step.y = -1; break;
-                case 2: step.x = -1; break;
-                case 3: step.x = 1; break;
-                case 4: step.x = 0; step.y = 0; break;
+                case 1: step.y = 1; break;
+                case 2: step.y = -1; break;
+                case 3: step.x = -1; break;
+                case 4: step.x = 1; break;
+                case 0: step.x = 0; step.y = 0; break;
             }
             
-             Position position = start + step;
+             Position position = snake[0].GetPosition() + step;
            
             
             if (!(position.y > width -1 || position.y < 0 || position.x < 0 || position.x > height -1)){
                 if (CheckPositionAvailability(position))
                 {
-                    SetPositionAvailability(head.GetPosition(), true);
-                    head.SetPosition(position);
+
+                    for (int i = 0; i < snake.Count; i++)
+                    {               
+                        Position startPosition = snake[i].GetPosition();
+                        SetSceneObjectToPosition(snake[i], position);
+                        position = startPosition;               
+                    }
+
+
+
                 }
                 else
                 {
+                    SceneObject myApple;
                     foreach (var apple in apples)
                     {
-                        if (apple.GetPosition() == position)
-                        {
-                            apple.SetPosition(GetAvailablePosition());  
-                            head.SetPosition(position);                     
-                            
-        
-                            SceneObject tail = CreateObjectOnMap(CreateObject("Tail" + snake.Count), position);
-                            CreateSprite(tail.GetObject(), 1, 1, Color.black, 2);
-                            snake.Add(tail);
-                            
+                        if(apple.GetPosition() == position) 
+                            myApple = apple;
+                        else
+                            myApple = null; 
+                    }
+                        
+                        
+                    if (myApple != null && allPositions.Count >= apples.Count)
+                        SetSceneObjectToPosition(apple, GetAvailablePosition()); 
+                    else
+                    {
+                        
+                        apple.GetObject().SetActive(false);
+                        
 
+                        SetPositionAvailability(apple.GetPosition(), true);
+                        apples.Remove(apple);
+                    }
+
+                            
                             for (int i = 0; i < snake.Count; i++)
                             {               
-                                //SetObjectToNode(snake[i], start);
-                                //start
+                                Position startPosition = snake[i].GetPosition();
+                                SetSceneObjectToPosition(snake[i], position);
+                                position = startPosition;               
                             }
 
+                            SceneObject tail = CreateObjectOnMap(CreateObject("Tail" + snake.Count, "Snake"), position);
+                            SetPositionAvailability(tail.GetPosition(), false);
+                            CreateSprite(obj: tail.GetObject(), color: Color.black, layer: 2);
+                            
+                            snake.Add(tail);
                         }
                         
                     }
 
                 }
-
-                    /*
-                    if(snake.Count==1)
-                    {
-                        snake.Last().SetNode(nodes[x,y]);
-                    }
-                    else
-                    {
-                        snake[snake.Count-1].GetParentNodeAndSetChildNode(nodes[x,y]);
-                        snake[snake.Count-2].GetParentNodeAndSetChildNode(snake[snake.Count-1].GetNode());
-                        //for (int i = snake.Count; i > 1; i--)
-                        //{
-                           // snake[i].GetParentNodeAndSetChildNode(snake[i-1].GetNode());
-                        //}
-                    }
-                    SetNodeAvailability(snake.Last().GetNode(), false);
-                    cameraObj.transform.position = new Vector3 (x, y,-15f);
-                    */
-                
+               
             }
         }  
         
@@ -298,30 +316,47 @@ namespace SmartSnake
         }
 
         //Создаем объект
-        GameObject CreateObject(string name, string parent = "Scene")
+        GameObject CreateObject(string name, string parent = null)
         {          
             GameObject obj = new GameObject(name);
-            obj.transform.SetParent(GameObject.Find(parent).transform);
-            
+            if (parent != null)
+                obj.transform.parent = GameObject.Find(parent).transform;
+            else
+                obj.transform.parent = this.transform;           
+
             return obj;
         }
 
         //Создаем спрайт объекта
-        private void CreateSprite(GameObject obj, int width, int height, Color color, int layer) 
+        private void CreateSprite(GameObject obj, int width = 1, int height = 1, Color color = default(Color), int layer = 0) 
         {   
             SpriteRenderer objRndr = obj.AddComponent<SpriteRenderer>();
             Texture2D texture = new Texture2D (width, height);
-            texture.filterMode = FilterMode.Bilinear;
-            
+        
             for (int x = 0; x < width; x++){
                 for (int y = 0; y < height; y++){
-                    texture.SetPixel(x, y, color);
+                    if (color == default(Color))
+                    {   
+                        Color custom;
+                        
+                        if((x + y) % 2 == 0)
+                            custom = Color.gray;
+                        else
+                            custom = Color.white;
+                        
+                        texture.SetPixel(x, y, custom);
+
+                    }
+                    else 
+                        texture.SetPixel(x, y, color);
                 }
             }
             texture.Apply();
+            texture.filterMode = FilterMode.Point;
             
             Rect rect = new Rect(0,0,width, height);
             objRndr.sprite =  Sprite.Create(texture, rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
+            objRndr.sortingOrder = layer;
         }
 
         public void SetCameraPosition(GameObject camera, GameObject obj)
@@ -340,7 +375,7 @@ namespace SmartSnake
 
         private void SetSceneObjectToPosition(SceneObject sobj, Position position)
         {
-            
+            SetPositionAvailability(sobj.GetPosition(), true);
             sobj.SetPosition(position);
             SetPositionAvailability(position, false);
         }
@@ -595,7 +630,7 @@ namespace SmartSnake
 
             SpriteRenderer objRndr = obj.AddComponent<SpriteRenderer>();
             objRndr.sprite = CreateSprite(width, height, color);
-            objRndr.sortingOrder = layer;
+            
             
             return sObj;
         }
