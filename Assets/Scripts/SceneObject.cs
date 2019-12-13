@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 
 namespace SmartSnake
@@ -19,9 +17,10 @@ namespace SmartSnake
             SetPosition(position);
         }
 
-        public virtual void SetPosition(Position position)
+        public void SetPosition(Position position)
         {
             this.position = position;
+            this.obj.transform.position = position.ToVector3();
         } 
 
         public Position GetPosition()

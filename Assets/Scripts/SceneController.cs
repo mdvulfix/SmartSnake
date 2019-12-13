@@ -52,24 +52,48 @@ namespace SmartSnake
                 y = a.y - b.y,
                 z = a.z - b.z
             };
-        }  
+        }
+
+
+        public override bool Equals(System.Object obj)
+        {
+            if (! (obj is Position)) return false;
+        
+            Position p = (Position) obj;
+            return x == p.x && y == p.y && z == p.z;
+        }
+    
+        public override int GetHashCode()
+        { 
+            return (x ^ y) ^ z;
+        } 
+
+
+        public static bool operator == (Position lhs, Position rhs) 
+        {             
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator != (Position lhs, Position rhs) 
+        {             
+            return !lhs.Equals(rhs);
+        } 
     }  
 
     public class SceneController : MonoBehaviour
     {
   
         [SerializeField]
-        private int width =10, height =10;
+        int width =10, height =10;
         
-        public SceneObject map;      
-        
-        public List<GameObject> snake;
-        GameObject head;
-        
-        GameObject[] apples;
-
+        GameObject map; 
         Position[,] map2D;
         List<Position> allPositions;
+        
+        GameObject player;
+        List<SceneObject> snake;
+        
+        SceneObject[] apples;
 
         enum Direction {up, down, left, right, noDirection}
 
@@ -84,7 +108,6 @@ namespace SmartSnake
         {
             CreateMap(width, height);
             
-            CreatePlayer();
             CreateSnake();
             CreateApple(5);
 
@@ -96,11 +119,11 @@ namespace SmartSnake
         {
             // Создаем карту;
             map = CreateObject("Map");
-            
-            //head = CreateObject("Head", "Player");
             CreateSprite(map, width, height, Color.white, 0);
             
             map2D = new Position[width, height];
+            allPositions = new List<Position>();
+
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
@@ -109,41 +132,40 @@ namespace SmartSnake
                     allPositions.Add(map2D [x,y]);
                 }
             }   
+
+            
       
         }
         
-        void CreatePlayer()
-        {
-
-            SceneObject player = CreateObject("Player");
-           
-            
-            //SetCamera(maincamera);
-            //Player.SetPosition(GetAvailableNode().GetPosition());
-
-        }
-
         void CreateSnake()
         {
             // Создаем змейку;
-            head = CreateObject("Head", "Player");
-            CreateSprite(head, 1, 1, Color.black, 2);
-            SetObjectToNode(head, Player.GetPosition());
-            //snake.Add(head);
+            CreateObject("Snake");
+            GameObject objHead = CreateObject("Head", "Snake");
+
+            SceneObject sobjHead = CreateObjectOnMap(objHead, GetAvailablePosition());
+            CreateSprite(sobjHead.GetObject(), 1, 1, Color.black, 2);
+
+            GameObject objCamera = CreateObject("Camera", "Head");
+            objCamera.transform.localPosition = new Vector3 (0, 0,-15f);
+            objCamera.AddComponent<Camera>().fieldOfView = 100f;
+
+            snake = new List<SceneObject>();
+            snake.Add(sobjHead);
         }
 
 
         private void CreateApple(int amount)
         {
  
-            apples = new GameObject[amount];
+            apples = new SceneObject[amount];
+            GameObject[] objApples = new GameObject[amount];
             for (int i = 0; i < amount; i++)
             {               
+                objApples[i] = CreateObject("Apple" + i);
                 
-                apples[i] = CreateObject("Apple" + i);
-                CreateSprite(apples[i], 1, 1, Color.green, 1);               
-                SetObjectToNode(apples[i] , GetAvailableNode().GetPosition());
-                
+                apples[i] = CreateObjectOnMap(objApples[i], GetAvailablePosition());
+                CreateSprite(apples[i].GetObject(), 1, 1, Color.green, 1);                             
             }
         }
 
@@ -165,8 +187,6 @@ namespace SmartSnake
             }
         }
 
-        
-        
         private Direction GetDirection()
         {
             Direction direction = Direction.noDirection;
@@ -196,8 +216,9 @@ namespace SmartSnake
         
         private void MoveSnake(int direction)
         {
-            
-            Position start = Player.GetPosition();
+            SceneObject head = snake[0];
+
+            Position start = head.GetPosition();
             Position step = new Position();
             switch (direction)
             {   
@@ -212,42 +233,31 @@ namespace SmartSnake
            
             
             if (!(position.y > width -1 || position.y < 0 || position.x < 0 || position.x > height -1)){
-                if (CheckNodeAvailability(position))
+                if (CheckPositionAvailability(position))
                 {
-                    SetNodeAvailability(Player.GetPosition(), true);
-                    Player.SetPosition(position);
-                    SetObjectToNode(head, Player.GetPosition());
+                    SetPositionAvailability(head.GetPosition(), true);
+                    head.SetPosition(position);
                 }
                 else
                 {
                     foreach (var apple in apples)
                     {
-                        if (apple == nodes[position.x, position.y].GetObject())
+                        if (apple.GetPosition() == position)
                         {
-                            SetObjectToNode(apple, GetAvailableNode().GetPosition());
-
+                            apple.SetPosition(GetAvailablePosition());  
+                            head.SetPosition(position);                     
                             
-                            
-                            
-                            Player.SetPosition(position);
-                            SetObjectToNode(head, Player.GetPosition());
         
-                            GameObject tail = CreateObject("Tail" + snake.Count, "Player");
-                            CreateSprite(tail, 1, 1, Color.black, 2);
+                            SceneObject tail = CreateObjectOnMap(CreateObject("Tail" + snake.Count), position);
+                            CreateSprite(tail.GetObject(), 1, 1, Color.black, 2);
                             snake.Add(tail);
-
+                            
 
                             for (int i = 0; i < snake.Count; i++)
                             {               
-                                SetObjectToNode(snake[i], start);
-                                start
-
-                
+                                //SetObjectToNode(snake[i], start);
+                                //start
                             }
-                            
-                            
-                            
-            
 
                         }
                         
@@ -281,10 +291,19 @@ namespace SmartSnake
 
     #region functions
 
-        //Создаем объект
-        SceneObject CreateObject(GameObject obj, Position position)
+        //Создаем объект на карте
+        SceneObject CreateObjectOnMap(GameObject obj, Position position)
         {          
             return new SceneObject(obj, position);
+        }
+
+        //Создаем объект
+        GameObject CreateObject(string name, string parent = "Scene")
+        {          
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(GameObject.Find(parent).transform);
+            
+            return obj;
         }
 
         //Создаем спрайт объекта
@@ -311,41 +330,38 @@ namespace SmartSnake
         }
 
 
-
-
         private Position GetAvailablePosition()
         {
-            
-            
             
             int position = Random.Range(0, allPositions.Count);
             return allPositions[position];
 
         }
 
-        private void SetObjectToNode(GameObject obj, Position3D position)
+        private void SetSceneObjectToPosition(SceneObject sobj, Position position)
         {
-            node.SetObject(obj);
-            SetNodeAvailability(position, false);
+            
+            sobj.SetPosition(position);
+            SetPositionAvailability(position, false);
         }
 
-        public bool CheckNodeAvailability(Position3D position)
+        public bool CheckPositionAvailability(Position position)
         {
             bool isAvailable = false;
-            if (availableCells.Contains(position))
+            if (allPositions.Contains(position))
             {
                 isAvailable = true;
             }
             return isAvailable;
         }
 
-        public void SetCellAvailability(Position3D position, bool trueOrFalse)
+        public void SetPositionAvailability(Position position, bool trueOrFalse)
         {
             if(trueOrFalse){
-                availableCells.Add(position);
+                allPositions.Add(position);
             }
             else{
-                availableCells.Remove(position);
+                allPositions.Remove(position);
             }
         }
 
