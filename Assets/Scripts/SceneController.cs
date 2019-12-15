@@ -181,8 +181,8 @@ namespace SmartSnake
 
         private void Update() 
         {
-            
-
+            if (apples.Count == 0)
+                Debug.Log ("Winner winner chicken dinner!!");
         }
 
 
@@ -227,7 +227,6 @@ namespace SmartSnake
             return direction;
         }
 
-        
         private void MoveSnake(int direction)
         {
 
@@ -255,47 +254,36 @@ namespace SmartSnake
                         position = startPosition;               
                     }
 
-
-
                 }
-                else
+                else 
                 {
-                    SceneObject myApple;
-                    foreach (var apple in apples)
+                    SceneObject apple;
+                    if(SeachForApple(position, out apple))
                     {
-                        if(apple.GetPosition() == position) 
-                            myApple = apple;
+                        
+                        if (allPositions.Count >= apples.Count)
+                            SetSceneObjectToPosition(apple, GetAvailablePosition()); 
                         else
-                            myApple = null; 
-                    }
-                        
-                        
-                    if (myApple != null && allPositions.Count >= apples.Count)
-                        SetSceneObjectToPosition(apple, GetAvailablePosition()); 
-                    else
-                    {
-                        
-                        apple.GetObject().SetActive(false);
-                        
-
-                        SetPositionAvailability(apple.GetPosition(), true);
-                        apples.Remove(apple);
-                    }
-
+                        {
+                            apple.GetObject().SetActive(false);
+                            SetPositionAvailability(apple.GetPosition(), true);
+                            apples.Remove(apple);
+                            Debug.Log(apples.Count);
                             
-                            for (int i = 0; i < snake.Count; i++)
-                            {               
-                                Position startPosition = snake[i].GetPosition();
-                                SetSceneObjectToPosition(snake[i], position);
-                                position = startPosition;               
-                            }
-
-                            SceneObject tail = CreateObjectOnMap(CreateObject("Tail" + snake.Count, "Snake"), position);
-                            SetPositionAvailability(tail.GetPosition(), false);
-                            CreateSprite(obj: tail.GetObject(), color: Color.black, layer: 2);
-                            
-                            snake.Add(tail);
                         }
+                            
+                        for (int i = 0; i < snake.Count; i++)
+                        {               
+                            Position startPosition = snake[i].GetPosition();
+                            SetSceneObjectToPosition(snake[i], position);
+                            position = startPosition;               
+                        }
+
+                        SceneObject tail = CreateObjectOnMap(CreateObject("Tail" + snake.Count, "Snake"), position);
+                        SetPositionAvailability(tail.GetPosition(), false);
+                        CreateSprite(obj: tail.GetObject(), color: Color.black, layer: 2);
+                        
+                        snake.Add(tail);
                         
                     }
 
@@ -359,12 +347,6 @@ namespace SmartSnake
             objRndr.sortingOrder = layer;
         }
 
-        public void SetCameraPosition(GameObject camera, GameObject obj)
-        {
-            camera.transform.position = new Vector3(obj.transform.position.x ,obj.transform.position.y, -15f);
-        }
-
-
         private Position GetAvailablePosition()
         {
             
@@ -398,6 +380,23 @@ namespace SmartSnake
             else{
                 allPositions.Remove(position);
             }
+        }
+
+        public bool SeachForApple(Position position, out SceneObject apple)
+        {
+            bool isApple = false;
+            apple = null;
+            foreach (SceneObject sobj in apples)
+            {
+                if(sobj.GetPosition() == position)
+                {
+                    apple =  sobj;
+                    isApple = true;
+                    //apple.GetObject().SetActive(false);
+                    //SetPositionAvailability(apple.GetPosition(), true);
+                }
+            }
+            return isApple;
         }
 
         #endregion
