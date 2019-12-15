@@ -122,6 +122,7 @@ GameObject:
   m_Component:
   - component: {fileID: 232501725}
   - component: {fileID: 232501724}
+  - component: {fileID: 232501726}
   m_Layer: 0
   m_Name: Scene
   m_TagString: Untagged
@@ -158,3 +159,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &232501726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 232501723}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6bcc8c40e2b10a4f825c48256ff399a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  width: 10
+  height: 10
+  amountOfApples: 5

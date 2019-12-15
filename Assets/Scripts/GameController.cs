@@ -80,7 +80,7 @@ namespace SmartSnake
         } 
     }  
 
-    public class SceneController : MonoBehaviour
+    public class GameController : MonoBehaviour
     {
   
         [SerializeField]
@@ -183,6 +183,9 @@ namespace SmartSnake
         {
             if (apples.Count == 0)
                 Debug.Log ("Winner winner chicken dinner!!");
+
+            if (apples.Count == 0)
+                Debug.Log ("Winner winner chicken dinner!!");
         }
 
 
@@ -197,7 +200,10 @@ namespace SmartSnake
             while(true)
             {
                 yield return time;
-                MoveSnake(GetDirection(0, out direction));
+                if(FindAvailablePositions(snake[0].GetPosition()) != 0)
+                    MoveSnake(GetDirection(0, out direction));
+                else
+                    Debug.Log("GAME OVER");
             }
         }
 
@@ -257,17 +263,20 @@ namespace SmartSnake
                 }
                 else 
                 {
-                    SceneObject apple;
-                    if(SeachForApple(position, out apple))
+                    bool isApple = false;
+                    bool isSnake = false; 
+                    SceneObject sobj = SeachForSceneObject(position, out isApple , out isSnake);
+                    
+                    if(isApple)
                     {
                         
                         if (allPositions.Count >= apples.Count)
-                            SetSceneObjectToPosition(apple, GetAvailablePosition()); 
+                            SetSceneObjectToPosition(sobj, GetAvailablePosition()); 
                         else
                         {
-                            apple.GetObject().SetActive(false);
-                            SetPositionAvailability(apple.GetPosition(), true);
-                            apples.Remove(apple);
+                            sobj.GetObject().SetActive(false);
+                            SetPositionAvailability(sobj.GetPosition(), true);
+                            apples.Remove(sobj);
                             Debug.Log(apples.Count);
                             
                         }
@@ -372,6 +381,36 @@ namespace SmartSnake
             return isAvailable;
         }
 
+        int FindAvailablePositions(Position position)
+        {
+            int availableDirection = 0;
+            for (int i = 1; i < 5; i++)
+            {
+                switch (i)
+                {   
+                    case 1: position.y += 1; break;
+                    case 2: position.y -= 1; break;
+                    case 3: position.x -= 1; break;
+                    case 4: position.x += 1; break;
+                }
+
+                if (!(position.y > width -1 || position.y < 0 || position.x < 0 || position.x > height -1))
+                {
+                    bool apple = false;
+                    bool snake = false;
+                    SeachForSceneObject(position, out apple, out snake);
+                    
+                    if(!snake)
+                    {
+                        availableDirection = i;
+                        continue;
+                    }
+                }
+                
+            }
+            return availableDirection;
+        }
+
         public void SetPositionAvailability(Position position, bool trueOrFalse)
         {
             if(trueOrFalse){
@@ -382,21 +421,33 @@ namespace SmartSnake
             }
         }
 
-        public bool SeachForApple(Position position, out SceneObject apple)
+        public SceneObject SeachForSceneObject(Position position, out bool isApple, out bool isSnake)
         {
-            bool isApple = false;
-            apple = null;
-            foreach (SceneObject sobj in apples)
+            isApple = false;
+            isSnake = false;
+            foreach (SceneObject apple in apples)
             {
-                if(sobj.GetPosition() == position)
+                if(apple.GetPosition() == position)
                 {
-                    apple =  sobj;
                     isApple = true;
+                    return apple;
+                    
                     //apple.GetObject().SetActive(false);
                     //SetPositionAvailability(apple.GetPosition(), true);
                 }
             }
-            return isApple;
+
+            foreach (SceneObject tail in snake)
+            {
+                if(tail.GetPosition() == position)
+                {
+                    isSnake = true;
+                    return tail;
+                    //apple.GetObject().SetActive(false);
+                    //SetPositionAvailability(apple.GetPosition(), true);
+                }
+            }
+            return null;
         }
 
         #endregion
