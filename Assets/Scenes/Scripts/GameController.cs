@@ -120,7 +120,7 @@ namespace SmartSnake
         {
             // Создаем карту;
             map = CreateObject("Map");
-            CreateSprite(map, width, height);
+            CreateSprite(obj: map, width: width, height: height, layer: 1);
             
             map2D = new Position[width, height];
             allPositions = new List<Position>();
@@ -134,9 +134,9 @@ namespace SmartSnake
                 }
             }  
 
-            GameObject objCamera = CreateObject("Camera", "Map");
-            objCamera.transform.localPosition = new Vector3 (width/2f, height/2f,-10f);
-            objCamera.AddComponent<Camera>().fieldOfView = 100f; 
+            //GameObject objCamera = CreateObject("Camera", "Map");
+           // objCamera.transform.localPosition = new Vector3 (width/2f, height/2f,-10f);
+            //objCamera.AddComponent<Camera>().fieldOfView = 100f; 
 
             
       
@@ -149,7 +149,7 @@ namespace SmartSnake
 
             SceneObject head = CreateObjectOnMap(CreateObject("Head", "Snake"), GetAvailablePosition());
             SetPositionAvailability(head.GetPosition(), false);
-            CreateSprite(obj: head.GetObject(), color: Color.black, layer: 2);
+            CreateSprite(obj: head.GetObject(), color: Color.black, layer: 3);
 
 
 
@@ -167,7 +167,7 @@ namespace SmartSnake
             {               
                 SceneObject apple = CreateObjectOnMap(CreateObject("Apple" + i), GetAvailablePosition());
                 SetPositionAvailability(apple.GetPosition(), false);
-                CreateSprite(obj: apple.GetObject(), color: Color.green, layer: 1);   
+                CreateSprite(obj: apple.GetObject(), color: Color.green, layer: 2);   
 
                 apples.Add(apple);
 
@@ -200,10 +200,10 @@ namespace SmartSnake
             while(true)
             {
                 yield return time;
-                if(FindAvailablePositions(snake[0].GetPosition()) != 0)
-                    MoveSnake(GetDirection(0, out direction));
-                else
-                    Debug.Log("GAME OVER");
+                MoveSnake(GetDirection(0, out direction));
+
+
+
             }
         }
 
@@ -263,11 +263,10 @@ namespace SmartSnake
                 }
                 else 
                 {
-                    bool isApple = false;
-                    bool isSnake = false; 
-                    SceneObject sobj = SeachForSceneObject(position, out isApple , out isSnake);
+
                     
-                    if(isApple)
+                    SceneObject sobj;
+                    if(SeachForSceneObject(position, out sobj))
                     {
                         
                         if (allPositions.Count >= apples.Count)
@@ -421,22 +420,22 @@ namespace SmartSnake
             }
         }
 
-        public SceneObject SeachForSceneObject(Position position, out bool isApple, out bool isSnake)
+        public bool SeachForSceneObject(Position position, out SceneObject sobj)
         {
-            isApple = false;
-            isSnake = false;
+
+            bool trueOrFalse = false;
             foreach (SceneObject apple in apples)
             {
                 if(apple.GetPosition() == position)
                 {
-                    isApple = true;
-                    return apple;
+                    sobj = apple;
+                    trueOrFalse = true;
                     
                     //apple.GetObject().SetActive(false);
                     //SetPositionAvailability(apple.GetPosition(), true);
                 }
             }
-
+            /*
             foreach (SceneObject tail in snake)
             {
                 if(tail.GetPosition() == position)
@@ -447,7 +446,8 @@ namespace SmartSnake
                     //SetPositionAvailability(apple.GetPosition(), true);
                 }
             }
-            return null;
+            */
+            return trueOrFalse;
         }
 
         #endregion
