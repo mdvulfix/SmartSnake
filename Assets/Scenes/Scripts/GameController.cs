@@ -87,8 +87,9 @@ namespace SmartSnake
         int width =10, height =10 , amountOfApples = 5;
 
         
-        GameObject map; 
-        Position[,] map2D;
+        GameObject map2D; 
+        GameObject map3D; 
+        public Position[,] gridOfMap2D;
         List<Position> allPositions;
         
         GameObject player;
@@ -99,11 +100,12 @@ namespace SmartSnake
 
         bool startMove;
 
-        #region start
+#region start
         
         private void Awake() 
         {
-            CreateMap(width, height);
+            CreateMap2D(width, height);
+            CreateMap3D(width, height);
             
             CreateSnake();
             CreateApple(amountOfApples);
@@ -116,32 +118,43 @@ namespace SmartSnake
 
         }
 
-        void CreateMap(int width, int height)
+        void CreateMap2D(int width, int height)
         {
             // Создаем карту;
-            map = CreateObject("Map");
-            CreateSprite(obj: map, width: width, height: height, layer: 1);
+            map2D = CreateObject("Map2D");
+            CreateSprite(obj: map2D, width: width, height: height, layer: 1);
             
-            map2D = new Position[width, height];
+            gridOfMap2D = new Position[width, height];
             allPositions = new List<Position>();
 
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
                 {
-                    map2D [x,y]  = new Position(x, y);
-                    allPositions.Add(map2D [x,y]);
+                    gridOfMap2D [x,y]  = new Position(x, y);
+                    allPositions.Add(gridOfMap2D [x,y]);
                 }
             }  
 
             //GameObject objCamera = CreateObject("Camera", "Map");
            // objCamera.transform.localPosition = new Vector3 (width/2f, height/2f,-10f);
             //objCamera.AddComponent<Camera>().fieldOfView = 100f; 
-
-            
-      
         }
-        
+
+        void CreateMap3D(int width, int height)
+        {
+            // Создаем карту;
+            map3D = CreateObject("Map3D");
+            CreateMesh(obj: map3D);
+            
+        }
+
+
+
+
+
+
+
         void CreateSnake()
         {
             // Создаем змейку;
@@ -174,9 +187,9 @@ namespace SmartSnake
             }
         }
 
-    #endregion
+#endregion
 
-    #region update
+#region update
 
 
         private void Update() 
@@ -301,9 +314,9 @@ namespace SmartSnake
         }  
         
 
-    #endregion
+#endregion
 
-    #region functions
+#region functions
 
         //Создаем объект на карте
         SceneObject CreateObjectOnMap(GameObject obj, Position position)
@@ -326,7 +339,7 @@ namespace SmartSnake
         //Создаем спрайт объекта
         private void CreateSprite(GameObject obj, int width = 1, int height = 1, Color color = default(Color), int layer = 0) 
         {   
-            SpriteRenderer objRndr = obj.AddComponent<SpriteRenderer>();
+            SpriteRenderer objSR = obj.AddComponent<SpriteRenderer>();
             Texture2D texture = new Texture2D (width, height);
         
             for (int x = 0; x < width; x++){
@@ -351,9 +364,49 @@ namespace SmartSnake
             texture.filterMode = FilterMode.Point;
             
             Rect rect = new Rect(0,0,width, height);
-            objRndr.sprite =  Sprite.Create(texture, rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
-            objRndr.sortingOrder = layer;
+            objSR.sprite =  Sprite.Create(texture, rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
+            objSR.sortingOrder = layer;
         }
+
+        private void CreateMesh(GameObject obj, int width = 1, int height = 1, Material material = null)
+        {
+            MeshFilter objMF = obj.AddComponent<MeshFilter>();
+            MeshRenderer objMR = obj.AddComponent<MeshRenderer>();
+
+            Mesh mesh = new Mesh();
+            mesh.vertices = new Vector3[]
+            {
+                new Vector3(0, 0, 0),
+                new Vector3(width, 0, 0),
+                new Vector3(0, 0, height),
+                new Vector3(width, 0, height)
+            };
+
+            mesh.uv = new Vector2[]
+            {
+                new Vector2(0, 0),
+                new Vector2(1, 0),
+                new Vector2(0, 1),
+                new Vector2(1, 1)
+            };
+
+            mesh.triangles = new int[]
+            {
+                0, 2, 3, 
+                0, 3, 1
+                
+                
+            };
+
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            //mesh.RecalculateTangents();            
+            
+            objMF.mesh = mesh;
+
+
+        }
+
 
         private Position GetAvailablePosition()
         {
@@ -379,7 +432,8 @@ namespace SmartSnake
             }
             return isAvailable;
         }
-
+        
+        /*
         int FindAvailablePositions(Position position)
         {
             int availableDirection = 0;
@@ -395,11 +449,8 @@ namespace SmartSnake
 
                 if (!(position.y > width -1 || position.y < 0 || position.x < 0 || position.x > height -1))
                 {
-                    bool apple = false;
-                    bool snake = false;
-                    SeachForSceneObject(position, out apple, out snake);
-                    
-                    if(!snake)
+                    SceneObject apple;                    
+                    if(SeachForSceneObject(position, out apple))
                     {
                         availableDirection = i;
                         continue;
@@ -409,6 +460,7 @@ namespace SmartSnake
             }
             return availableDirection;
         }
+        */
 
         public void SetPositionAvailability(Position position, bool trueOrFalse)
         {
@@ -424,6 +476,7 @@ namespace SmartSnake
         {
 
             bool trueOrFalse = false;
+            sobj = null;
             foreach (SceneObject apple in apples)
             {
                 if(apple.GetPosition() == position)
@@ -447,10 +500,11 @@ namespace SmartSnake
                 }
             }
             */
+
             return trueOrFalse;
         }
 
-        #endregion
+#endregion
 
 
 
