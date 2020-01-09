@@ -25,22 +25,30 @@ namespace SmartSnake
     public class Controller : MonoBehaviour
     {
   
+
+        int width = 1;
+        int height = 1;
+
+        
         [SerializeField]
-        int width = 3;
+        int xSize = 1;
         [SerializeField]
-        int height = 3;
+        int zSize = 1;
         [SerializeField]
-        int length = 3;
-        [SerializeField, Range(1,10)]
+        float scale = 1;
+        
+        
         int amountOfApples = 5;
 
+
+        GameObject terrain;
         [SerializeField]
-        Material materialOfMap3D;
+        Material materialOfTerrain;
 
 
         
         GameObject map2D; 
-        GameObject map3D; 
+         
         public Position[,] gridOfMap2D;
         List<Position> allPositions;
         
@@ -60,7 +68,7 @@ namespace SmartSnake
             //CreateSnake();
             //CreateApple(amountOfApples);
 
-            CreateMap3D(width, length);
+            CreateTerrain(xSize, zSize, scale);
         }
 
         // Запускаем игру:
@@ -104,11 +112,23 @@ namespace SmartSnake
         }
         
         // Создаем карту;
-        void CreateMap3D(int width, int length)
+        void CreateTerrain(int xSize, int zSize, float scale)
         {
             
-            map3D = CreateObject("Map3D");
-            CreateMesh(obj: map3D, width: width, length: length, material: materialOfMap3D);
+            
+            
+            
+            
+            terrain = CreateObject("Terrain");
+            terrain.AddComponent<MeshRenderer>();
+            terrain.AddComponent<MeshFilter>();
+
+            Mesh objMesh = new CustomMesh(terrain.name, xSize, zSize, scale).CreateMesh();
+            terrain.GetComponent<MeshFilter>().mesh = objMesh;
+
+
+
+            //CreateMesh(obj: terrain, width: width, length: length, material: materialOfTerrain);
             
         }
         
@@ -328,65 +348,6 @@ namespace SmartSnake
             Rect rect = new Rect(0,0,width, height);
             objSR.sprite =  Sprite.Create(texture, rect, Vector2.zero, 1,0, SpriteMeshType.FullRect);
             objSR.sortingOrder = layer;
-        }
-
-        void CreateMesh(GameObject obj, int width = 1, int length = 1, Material material = null)
-        {
-            MeshFilter objMF = obj.AddComponent<MeshFilter>();
-            MeshRenderer objMR = obj.AddComponent<MeshRenderer>();
-
-            Mesh mesh = new Mesh();
-            mesh.name = obj.name;
-            
-            List<Vector3> vList = new List<Vector3>();
-            for(int z = 0; z < length + 1; z++ )
-                for(int x = 0; x < width + 1; x++)
-                    vList.Add(new Vector3(x, 0, z));
-
-            mesh.vertices = vList.ToArray();
-
-            
-            List<Triangle> triangles = new List<Triangle>();
-            for(int l = 0; l < length; l++)
-            {
-                for(int w = 0; w < width; w++)
-                {
-                    triangles.Add(new Triangle((l + 0) * (width + 1) + w, (l + 1) * (width + 1) + w, (l + 1) * (width + 1) + w + 1));
-                    triangles.Add(new Triangle((l + 0) * (width + 1) + w, (l + 1) * (width + 1) + w + 1, (l + 0) * (width + 1) + w + 1));
-                }
-            }
-            
-            List<int> tList = new List<int>();
-            for(int i = 0; i < triangles.Count; i++)
-			{
-                tList.Add(triangles[i].v1);
-                tList.Add(triangles[i].v2);
-                tList.Add(triangles[i].v3);
-			}
-            
-            mesh.triangles = tList.ToArray();
-            
-            List<Vector3> nList = new List<Vector3>();
-            for(int n = 0; n < vList.Count; n++ )
-                nList.Add(Vector3.up);
-            
-            mesh.normals = nList.ToArray();
-
-            List<Vector2> uvList = new List<Vector2>();
-            for(int y = 0; y < length + 1; y++ )
-                for(int x = 0; x < width + 1; x++)
-                    uvList.Add(new Vector2(x, y));
-
-            mesh.uv = uvList.ToArray();
- 
-            mesh.RecalculateBounds();
-            mesh.RecalculateNormals();
-            //mesh.RecalculateTangents();    
-
-        
-            objMR.material = material;         
-            objMF.mesh = mesh;
-
         }
 
 
