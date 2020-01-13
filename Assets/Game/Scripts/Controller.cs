@@ -21,7 +21,7 @@ namespace SmartSnake
             }
         }
     #endregion
-
+    [ExecuteInEditMode]
     public class Controller : MonoBehaviour
     {
   
